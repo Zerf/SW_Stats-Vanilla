@@ -1,7 +1,7 @@
 ## Interface: 11200
 ## Title: SW_Stats
-## Author: Artack (Madmortem EU DE) artack@sw-stats.com
-## Version: 2.0 Beta
+## Author: Artack (Madmortem EU DE) artack@sw-stats.com, modified by Zerf
+## Version: 2.0 Beta 7.1
 ## Notes: Shadow Warrior Damage Stats
 ## Dependencies:
 ## OptionalDeps: SW FixLogStrings, ButtonHole
