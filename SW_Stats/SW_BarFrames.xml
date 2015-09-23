@@ -33,6 +33,9 @@
 				
 				SW_LayoutMainWinButtons();
 			</OnShow>
+			<OnMouseWheel>
+				SW_BarFrame1_MouseScroll(arg1);
+			</OnMouseWheel>
 		</Scripts>
 		<Backdrop bgFile="Interface\AddOns\SW_Stats\images\back" edgeFile="Interface\Tooltips\UI-Tooltip-Border"
 			tile="true">

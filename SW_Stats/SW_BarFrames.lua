@@ -1,6 +1,7 @@
 
 -- array holding bars
 SW_Bars = {};
+SW_SCROLLPOS = 0;
 
 SW_BARSEPX = 5;
 SW_BARSEPY = 3;
@@ -264,7 +265,7 @@ function SW_BarsLayout(pName, changeAll)
 	
 	local bSet = SW_GetBarSettings(pName);
 	local startX, startY, fWidth, fHeight;
-	local bHeight, bWidth, fontSize;
+	local bHeight = bSet["BH"], bWidth, fontSize;
 	local colPos=1; local rowPos=1;
 	local colCount=bSet["COLC"];
 	local oTmp;
@@ -283,64 +284,79 @@ function SW_BarsLayout(pName, changeAll)
 	fHeight = oP:GetHeight();
 	
 	bAutoWidth = math.floor(((fWidth - 10 - ((colCount - 1) * SW_BARSEPX))  / colCount));
+	rowCount = math.floor(((fHeight - 30) / (SW_BARSEPY + bHeight)));
+	local colCount=bSet["COLC"];
+	
+	local first = true;
 	for i,b in ipairs(bs) do
-		if oP.lastTexture == nil or oP.lastTexture ~= bSet["BT"] or changeAll then
-			b:SetStatusBarTexture("Interface\\AddOns\\SW_Stats\\images\\b"..bSet["BT"]);
-		end
-		if i == 1 then
-			fontSize = b:GetFontSize();
-			if fontSize ~= bSet["BFS"] or changeAll then
-				fontSize = bSet["BFS"];
-				b:SetFontSize(fontSize);
-				changeFont = true;
+	
+		if i > SW_SCROLLPOS and i <= (SW_SCROLLPOS + rowCount) * colCount then
+	
+			if oP.lastTexture == nil or oP.lastTexture ~= bSet["BT"] or changeAll then
+				b:SetStatusBarTexture("Interface\\AddOns\\SW_Stats\\images\\b"..bSet["BT"]);
 			end
-			bHeight = b:GetHeight();
-			if bHeight ~= bSet["BH"] or changeAll then
-				bHeight = bSet["BH"];
-				b:SetHeight(bHeight);
-				changeHeight = true;
-			end
-			bWidth = b:GetWidth();
-			if bWidth ~= bAutoWidth or changeAll then
-				bWidth = bAutoWidth;
-				b:SetWidth(bWidth);
-				changeWidth = true;
-			end
-			
-			b:Show();
-			b:SetPoint("TOPLEFT",pName,"TOPLEFT",startX,startY);
-			--colCount = math.floor(((fWidth - 10)  / (SW_BARSEPX + bWidth)));
-			rowCount = math.floor(((fHeight - 30) / (SW_BARSEPY + bHeight)));
-			rowPos = rowPos + 1;
-			b.canBeSeen = true;
-		else
-			if rowPos > rowCount then
-				rowPos = 1;
-				colPos = colPos + 1;	
-			end
-			posX =  ((colPos -1) * SW_BARSEPX) + startX + ((colPos -1) * bWidth);
-			posY =  startY -(((rowPos -1) * SW_BARSEPY) + ((rowPos -1) * bHeight));
-			-- update
-			if changeWidth then
-				b:SetWidth(bWidth);
-			end
-			if changeHeight then
-				b:SetHeight(bHeight);
-			end
-			if changeFont then
-				b:SetFontSize(fontSize);
-			end
-			b:SetPoint("TOPLEFT",pName,"TOPLEFT",posX,posY);
-			
-			rowPos = rowPos + 1;
-			if posX + bWidth > fWidth then
-				b:Hide();
-				b.canBeSeen = false;
-			else
+			if first then
+				fontSize = b:GetFontSize();
+				bHeight = b:GetHeight();
+				bWidth = b:GetWidth();
+				
+				if fontSize ~= bSet["BFS"] or changeAll then
+					fontSize = bSet["BFS"];
+					b:SetFontSize(fontSize);
+					changeFont = true;
+				end
+				
+				if bHeight ~= bSet["BH"] or changeAll then
+					bHeight = bSet["BH"];
+					b:SetHeight(bHeight);
+					changeHeight = true;
+				end
+				
+				if bWidth ~= bAutoWidth or changeAll then
+					bWidth = bAutoWidth;
+					b:SetWidth(bWidth);
+					changeWidth = true;
+				end
+				
 				b:Show();
+				b:SetPoint("TOPLEFT",pName,"TOPLEFT",startX,startY);
+				--colCount = math.floor(((fWidth - 10)  / (SW_BARSEPX + bWidth)));
+				rowCount = math.floor(((fHeight - 30) / (SW_BARSEPY + bHeight)));
+				rowPos = rowPos + 1;
 				b.canBeSeen = true;
+				first = false;
+			else
+				if rowPos > rowCount then
+					rowPos = 1;
+					colPos = colPos + 1;	
+				end
+				posX =  ((colPos -1) * SW_BARSEPX) + startX + ((colPos -1) * bWidth);
+				posY =  startY -(((rowPos -1) * SW_BARSEPY) + ((rowPos -1) * bHeight));
+				-- update
+				if changeWidth then
+					b:SetWidth(bWidth);
+				end
+				if changeHeight then
+					b:SetHeight(bHeight);
+				end
+				if changeFont then
+					b:SetFontSize(fontSize);
+				end
+				b:SetPoint("TOPLEFT",pName,"TOPLEFT",posX,posY);
+				
+				rowPos = rowPos + 1;
+				if posX + bWidth > fWidth then
+					b:Hide();
+					b.canBeSeen = false;
+				else
+					b:Show();
+					b.canBeSeen = true;
+				end
+				
 			end
-			
+		else
+			b:Hide();
+			b.canBeSeen = false;
 		end
 	end
 	
@@ -357,6 +373,37 @@ function SW_BarsLayout(pName, changeAll)
 	oP.lastTexture = bSet["BT"];
 	
 end
+
+function SW_BarFrame1_MouseScroll(arg1)
+	local barFrame = getglobal("SW_BarFrame1");
+	local bSet = SW_GetBarSettings("SW_BarFrame1");
+	local fHeight = barFrame:GetHeight();
+
+	-- count visible rows
+	local totalRows = 0;
+	local datan = table.getn(SW_ViewBuffer.data);
+	for i, b in ipairs(SW_Bars["SW_BarFrame1"]) do 
+		if b and i <= datan and SW_ViewBuffer.data[i] ~= 0 and SW_ViewBuffer.data[i].sortOrder ~= 100 and SW_ViewBuffer.data[i].val ~= 0 then
+			totalRows = totalRows + 1
+		end
+	end
+
+	local bHeight = bSet["BH"];
+	local rowCount = math.floor(((fHeight - 30) / (SW_BARSEPY + bHeight)));
+	
+	if( SW_SCROLLPOS - arg1 > 0) then
+		if (SW_SCROLLPOS - arg1 <= totalRows - rowCount) then
+			SW_SCROLLPOS = SW_SCROLLPOS - arg1;
+		else
+			SW_SCROLLPOS = totalRows - rowCount;
+		end
+	else
+		SW_SCROLLPOS = 0;
+	end
+	
+	SW_BarsLayout("SW_BarFrame1", false)
+end
+
 function SW_OptKey(num)
 	if not getglobal("SW_BarFrame1"):IsVisible() then
 		getglobal("SW_BarFrame1"):Show()
