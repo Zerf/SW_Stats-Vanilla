@@ -401,7 +401,7 @@ function SW_BarFrame1_MouseScroll(arg1)
 		SW_SCROLLPOS = 0;
 	end
 	
-	SW_BarsLayout("SW_BarFrame1", false)
+	SW_BarsLayout("SW_BarFrame1", true)
 end
 
 function SW_OptKey(num)
